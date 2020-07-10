@@ -12,25 +12,36 @@ import java.util.*
 
 class WorkerBehavior(context: ActorContext<Command>) : AbstractBehavior<WorkerBehavior.Command>(context) {
 
-    class Command(
-        val message: String,
-        val sender: ActorRef<com.hyecheon.Command>
-    ) : Serializable {
+    private lateinit var prime: BigInteger
+
+    class Command(val message: String, val sender: ActorRef<com.hyecheon.Command>) : Serializable {
         companion object {
             private const val serialVersionUID = 1L
         }
     }
 
     override fun createReceive(): Receive<Command> {
+        return handleMessagesWhenWeDontYetHaveAPrimeNumber()
+    }
+
+    private fun handleMessagesWhenWeDontYetHaveAPrimeNumber(): Receive<Command> {
         return newReceiveBuilder()
             .onAnyMessage { command ->
-                when (command.message) {
-                    "start" -> {
-                        val bigInteger = BigInteger(2000, Random())
-                        command.sender.tell(ResultCommand(bigInteger.nextProbablePrime()))
-                    }
+                val bigInteger = BigInteger(2000, Random())
+                prime = bigInteger.nextProbablePrime()
+                command.sender.tell(ResultCommand(prime))
+                handleMessagesWhenWeAlreadyHaveAPrimeNumber(prime)
+            }
+            .build()
+    }
+
+    private fun handleMessagesWhenWeAlreadyHaveAPrimeNumber(prime: BigInteger): Receive<Command> {
+        return newReceiveBuilder()
+            .onAnyMessage {
+                if (it.message == "start") {
+                    it.sender.tell(ResultCommand(prime = prime));
                 }
-                this
+                Behaviors.same()
             }
             .build()
     }

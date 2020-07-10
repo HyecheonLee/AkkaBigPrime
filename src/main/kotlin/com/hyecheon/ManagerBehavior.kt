@@ -41,6 +41,7 @@ class ManagerBehavior(context: ActorContext<Command>) : AbstractBehavior<Command
             Behaviors.setup<Command> { ManagerBehavior(it) }
         }
     }
+
 }
 
 sealed class Command : Serializable {
